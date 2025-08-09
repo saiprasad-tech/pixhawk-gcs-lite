@@ -1,0 +1,27 @@
+name: Zip Android Project
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  zip-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Create Android project ZIP
+      run: |
+        zip -r android-project.zip android -x "android/.gradle/**" "android/.idea/**" "android/build/**" "android/app/build/**"
+        
+    - name: Upload Android project artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-project
+        path: android-project.zip
+        retention-days: 7
