@@ -1,0 +1,10 @@
+# Template for local.properties
+# Copy this file to local.properties and add your actual values
+# DO NOT commit local.properties to version control
+
+# Google Maps API Key
+# Get your key from: https://console.cloud.google.com/
+MAPS_API_KEY=your_actual_google_maps_api_key_here
+
+# Android SDK location (auto-configured by Android Studio)
+# sdk.dir=/path/to/your/android/sdk
