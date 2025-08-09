@@ -1,0 +1,3 @@
+# This is a placeholder file for the fonts directory
+# Add your custom font files (TTF, OTF) here
+# See THEME.md for instructions on replacing with licensed fonts
