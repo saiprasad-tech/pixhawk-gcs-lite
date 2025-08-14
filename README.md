@@ -113,6 +113,24 @@ Built APKs will be in the build directory, typically:
 - Advanced flight planning capabilities
 - Instrument displays and HUD overlays
 
+## Privacy & Data Access
+
+**Important**: This application does **NOT** have access to your repositories, personal files, or other applications. 
+
+### What the application accesses:
+- **Device sensors** (GPS, compass) for flight control
+- **Bluetooth/Serial** for connecting to flight controllers
+- **Internet** for map downloads (Google Maps integration)
+- **Local storage** for configuration and flight logs
+
+### What it does NOT access:
+- Git repositories or version control systems
+- Personal files, documents, or photos
+- Other applications on your device
+- Cloud storage services (except map caching)
+
+For complete details, see [PRIVACY.md](PRIVACY.md).
+
 ## Font Customization
 
 Both applications default to **Source Sans 3** (open-source). To use a licensed Emirates-like font:
@@ -132,6 +150,9 @@ Both applications default to **Source Sans 3** (open-source). To use a licensed 
 - Never commit API keys, passwords, or secrets
 - Use manifest placeholders for Android API keys
 - Store sensitive configuration in local.properties (Android) or environment variables
+- **Data Privacy**: This application operates locally and does not access user repositories or personal files
+- All data is stored locally on the user's device
+- Internet access is limited to map services and MAVLink connections
 
 ### Theme Consistency
 - Use centralized theme colors and typography
@@ -160,6 +181,7 @@ This project is licensed under [appropriate license]. See individual components 
 For issues and questions:
 - Check the documentation in each platform directory
 - Review the THEME.md for styling questions
+- See [PRIVACY.md](PRIVACY.md) for data access and privacy questions
 - Open GitHub issues for bugs or feature requests
 
 ## Roadmap
