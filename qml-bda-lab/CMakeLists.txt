@@ -28,6 +28,10 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS
     Quick
     QuickControls2
     Widgets
+    Location
+    Positioning
+    Bluetooth
+    Network
 )
 
 qt_standard_project_setup()
@@ -44,6 +48,11 @@ qt_add_qml_module(${CMAKE_PROJECT_NAME}
     QML_FILES
         qml/main.qml
         qml/theme/Theme.qml
+        qml/pages/SettingsPage.qml
+        qml/pages/MapPage.qml
+        qml/pages/CameraPage.qml
+        qml/pages/ConnectPage.qml
+        qml/components/TelemetryClient.qml
     RESOURCES
         resources/fonts/dummy.txt
 )
@@ -62,6 +71,10 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
     Qt6::Core
     Qt6::Quick
     Qt6::QuickControls2
+    Qt6::Location
+    Qt6::Positioning
+    Qt6::Bluetooth
+    Qt6::Network
 )
 
 # Install rules

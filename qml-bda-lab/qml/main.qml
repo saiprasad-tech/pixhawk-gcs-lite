@@ -2,16 +2,43 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import "theme"
+import "pages"
+import "components"
 
 ApplicationWindow {
     id: window
     visible: true
     width: 1024
     height: 768
-    title: qsTr("BDA-Lab Ground Control Station")
+    title: qsTr("Pixhawk GCS Lite")
     
     // Set application colors based on theme
     color: Theme.currentBackground
+    
+    // Global settings access
+    property alias settingsPageRef: settingsPage
+    
+    // Telemetry client
+    TelemetryClient {
+        id: telemetryClient
+        
+        onTelemetryUpdated: {
+            // Update map page with new drone position
+            if (hasValidPosition) {
+                mapPage.updateDronePosition(latitude, longitude, altitude, fixType, satellites)
+            }
+        }
+        
+        Component.onCompleted: {
+            // Configure from settings when available
+            if (settingsPage.useTelemetryUdp) {
+                setUdpMode(settingsPage.telemetryPort)
+            } else {
+                setHttpMode(settingsPage.telemetryEndpoint)
+            }
+            start()
+        }
+    }
     
     header: ToolBar {
         background: Rectangle {
@@ -24,7 +51,7 @@ ApplicationWindow {
             anchors.rightMargin: Theme.spacingM
             
             Text {
-                text: qsTr("BDA-Lab GCS")
+                text: qsTr("Pixhawk GCS Lite")
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeTitleLarge
                 font.weight: Theme.fontWeightMedium
@@ -32,9 +59,38 @@ ApplicationWindow {
                 Layout.fillWidth: true
             }
             
+            // Connection status indicator
+            RowLayout {
+                spacing: Theme.spacingS
+                
+                Rectangle {
+                    width: 12
+                    height: 12
+                    radius: 6
+                    color: telemetryClient.isConnected ? "#4CAF50" : "#F44336"
+                    
+                    SequentialAnimation on opacity {
+                        running: telemetryClient.isConnected
+                        loops: Animation.Infinite
+                        NumberAnimation { from: 1.0; to: 0.3; duration: 1000 }
+                        NumberAnimation { from: 0.3; to: 1.0; duration: 1000 }
+                    }
+                }
+                
+                Text {
+                    text: telemetryClient.isConnected ? qsTr("Connected") : qsTr("Offline")
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeBodySmall
+                    color: Theme.onPrimary
+                }
+            }
+            
             Button {
-                text: qsTr("Settings")
-                font.family: Theme.fontFamily
+                text: qsTr("🌙")
+                width: 40
+                height: 40
+                font.pixelSize: 16
+                
                 background: Rectangle {
                     color: Theme.secondary
                     radius: Theme.cornerRadiusS
@@ -46,235 +102,161 @@ ApplicationWindow {
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
+                
+                onClicked: {
+                    Theme.isDarkMode = !Theme.isDarkMode
+                }
             }
         }
     }
     
-    // Main content area
-    ScrollView {
+    // Main content with tab navigation
+    ColumnLayout {
         anchors.fill: parent
-        anchors.margins: Theme.spacingL
+        spacing: 0
         
-        ColumnLayout {
-            width: parent.width - Theme.spacingL * 2
-            spacing: Theme.spacingL
-            
-            // Welcome card
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 200
+        // Tab bar
+        TabBar {
+            id: tabBar
+            Layout.fillWidth: true
+            background: Rectangle {
                 color: Theme.currentCardBackground
-                radius: Theme.cornerRadiusM
-                border.color: Theme.outline
-                border.width: 1
-                
-                ColumnLayout {
-                    anchors.centerIn: parent
-                    spacing: Theme.spacingM
-                    
-                    Text {
-                        text: qsTr("Welcome to BDA-Lab")
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeHeadlineMedium
-                        font.weight: Theme.fontWeightMedium
-                        color: Theme.primary
-                        Layout.alignment: Qt.AlignHCenter
-                    }
-                    
-                    Text {
-                        text: qsTr("Ground Control Station for MAVLink Vehicles")
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeBodyLarge
-                        color: Theme.currentOnSurface
-                        Layout.alignment: Qt.AlignHCenter
-                    }
-                    
-                    Text {
-                        text: qsTr("Theme: Emirates-inspired Red/Gold")
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeLabelMedium
-                        color: Theme.secondary
-                        Layout.alignment: Qt.AlignHCenter
-                    }
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    anchors.bottom: parent.bottom
+                    color: Theme.outline
                 }
             }
             
-            // Feature grid
-            GridLayout {
-                Layout.fillWidth: true
-                columns: 2
-                columnSpacing: Theme.spacingM
-                rowSpacing: Theme.spacingM
+            TabButton {
+                text: qsTr("Connect")
+                font.family: Theme.fontFamily
                 
-                // Flight Planning Card
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 120
-                    color: Theme.currentCardBackground
-                    radius: Theme.cornerRadiusM
-                    border.color: Theme.outline
-                    border.width: 1
-                    
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        spacing: Theme.spacingS
-                        
-                        Text {
-                            text: qsTr("Flight Planning")
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeTitleMedium
-                            font.weight: Theme.fontWeightMedium
-                            color: Theme.primary
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                        
-                        Text {
-                            text: qsTr("Plan and execute missions")
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeBodySmall
-                            color: Theme.currentOnSurface
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                    }
+                background: Rectangle {
+                    color: parent.checked ? Theme.primary : "transparent"
+                    radius: Theme.cornerRadiusS
+                    opacity: parent.checked ? 1.0 : 0.1
                 }
                 
-                // Vehicle Status Card
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 120
-                    color: Theme.currentCardBackground
-                    radius: Theme.cornerRadiusM
-                    border.color: Theme.outline
-                    border.width: 1
-                    
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        spacing: Theme.spacingS
-                        
-                        Text {
-                            text: qsTr("Vehicle Status")
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeTitleMedium
-                            font.weight: Theme.fontWeightMedium
-                            color: Theme.primary
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                        
-                        Text {
-                            text: qsTr("Monitor telemetry data")
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeBodySmall
-                            color: Theme.currentOnSurface
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                    }
-                }
-                
-                // Map Display Card
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 120
-                    color: Theme.currentCardBackground
-                    radius: Theme.cornerRadiusM
-                    border.color: Theme.outline
-                    border.width: 1
-                    
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        spacing: Theme.spacingS
-                        
-                        Text {
-                            text: qsTr("Map Display")
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeTitleMedium
-                            font.weight: Theme.fontWeightMedium
-                            color: Theme.primary
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                        
-                        Text {
-                            text: qsTr("Real-time position tracking")
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeBodySmall
-                            color: Theme.currentOnSurface
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                    }
-                }
-                
-                // MAVLink Communication Card
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 120
-                    color: Theme.currentCardBackground
-                    radius: Theme.cornerRadiusM
-                    border.color: Theme.outline
-                    border.width: 1
-                    
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        spacing: Theme.spacingS
-                        
-                        Text {
-                            text: qsTr("MAVLink Communication")
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeTitleMedium
-                            font.weight: Theme.fontWeightMedium
-                            color: Theme.primary
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                        
-                        Text {
-                            text: qsTr("Connect via Bluetooth/Serial")
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeBodySmall
-                            color: Theme.currentOnSurface
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                    }
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: parent.checked ? Theme.onPrimary : Theme.currentOnSurface
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                 }
             }
             
-            // Action buttons
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: Theme.spacingM
+            TabButton {
+                text: qsTr("Map")
+                font.family: Theme.fontFamily
                 
-                Button {
-                    text: qsTr("Connect Vehicle")
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeBodyMedium
-                    background: Rectangle {
-                        color: parent.pressed ? Qt.darker(Theme.primary, 1.2) : Theme.primary
-                        radius: Theme.cornerRadiusS
+                background: Rectangle {
+                    color: parent.checked ? Theme.primary : "transparent"
+                    radius: Theme.cornerRadiusS
+                    opacity: parent.checked ? 1.0 : 0.1
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: parent.checked ? Theme.onPrimary : Theme.currentOnSurface
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+            
+            TabButton {
+                text: qsTr("Camera")
+                font.family: Theme.fontFamily
+                
+                background: Rectangle {
+                    color: parent.checked ? Theme.primary : "transparent"
+                    radius: Theme.cornerRadiusS
+                    opacity: parent.checked ? 1.0 : 0.1
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: parent.checked ? Theme.onPrimary : Theme.currentOnSurface
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+            
+            TabButton {
+                text: qsTr("Settings")
+                font.family: Theme.fontFamily
+                
+                background: Rectangle {
+                    color: parent.checked ? Theme.primary : "transparent"
+                    radius: Theme.cornerRadiusS
+                    opacity: parent.checked ? 1.0 : 0.1
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: parent.checked ? Theme.onPrimary : Theme.currentOnSurface
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+        }
+        
+        // Page content
+        StackLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            currentIndex: tabBar.currentIndex
+            
+            // Connect Page
+            ConnectPage {
+                id: connectPage
+            }
+            
+            // Map Page
+            MapPage {
+                id: mapPage
+                googleMapsApiKey: settingsPage.googleMapsApiKey
+            }
+            
+            // Camera Page
+            CameraPage {
+                id: cameraPage
+                streamUrl: settingsPage.cameraStreamUrl
+            }
+            
+            // Settings Page
+            SettingsPage {
+                id: settingsPage
+                
+                // When settings change, update telemetry client
+                onUseTelemetryUdpChanged: {
+                    telemetryClient.stop()
+                    if (useTelemetryUdp) {
+                        telemetryClient.setUdpMode(telemetryPort)
+                    } else {
+                        telemetryClient.setHttpMode(telemetryEndpoint)
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        font: parent.font
-                        color: Theme.onPrimary
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+                    telemetryClient.start()
+                }
+                
+                onTelemetryPortChanged: {
+                    if (useTelemetryUdp && telemetryClient.isConnected) {
+                        telemetryClient.stop()
+                        telemetryClient.setUdpMode(telemetryPort)
+                        telemetryClient.start()
                     }
                 }
                 
-                Button {
-                    text: qsTr("Toggle Theme")
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeBodyMedium
-                    background: Rectangle {
-                        color: parent.pressed ? Qt.darker(Theme.secondary, 1.2) : Theme.secondary
-                        radius: Theme.cornerRadiusS
-                    }
-                    contentItem: Text {
-                        text: parent.text
-                        font: parent.font
-                        color: Theme.onSecondary
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    
-                    onClicked: {
-                        Theme.isDarkMode = !Theme.isDarkMode
+                onTelemetryEndpointChanged: {
+                    if (!useTelemetryUdp && telemetryClient.isConnected) {
+                        telemetryClient.stop()
+                        telemetryClient.setHttpMode(telemetryEndpoint)
+                        telemetryClient.start()
                     }
                 }
             }
