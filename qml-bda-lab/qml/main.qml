@@ -16,7 +16,7 @@ ApplicationWindow {
     color: Theme.currentBackground
     
     // Global settings access
-    property alias settings: settingsPage.settings
+    property alias settingsPageRef: settingsPage
     
     // Telemetry client
     TelemetryClient {
